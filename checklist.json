@@ -2138,128 +2138,122 @@
                 ]
             },
             {
-                "category": "Chainlink",
+                "category": "Chainlink CCIP",
+                "description": "Cross-Chain Interoperability Protocol",
+                "data": [
+                    {
+                        "id": "SOL-Integrations-CC-1",
+                        "question": "Does the receiver contract's `_ccipReceive` function properly validate the `sourceChainSelector` and `sender` address against an allowlist?",
+                        "description": "Receiver contracts might process messages from unintended source chains or senders if they don't validate the origin.",
+                        "remediation": "Implement checks within `_ccipReceive` to verify the `any2EvmMessage.sourceChainSelector` and decoded `any2EvmMessage.sender` against administratively controlled allowlists.",
+                        "references": [],
+                        "tags": []
+                    },
+                    {
+                        "id": "SOL-Integrations-CC-2",
+                        "question": "Does the sender contract validate the `destinationChainSelector` against an allowlist before calling `ccipSend`?",
+                        "description": "Sender contracts might accidentally send messages and tokens to unintended or unsupported destination chains.",
+                        "remediation": "Implement checks in the sending function to ensure the `destinationChainSelector` corresponds to an explicitly allowlisted chain.",
+                        "references": [],
+                        "tags": []
+                    },
+                    {
+                        "id": "SOL-Integrations-CC-3",
+                        "question": "Does the receiver contract properly decode data (`any2EvmMessage.data`) ?",
+                        "description": "The encoding on the source chain and decoding on the destination chain must maintain precise structural consistency. ",
+                        "remediation": "Standardize both contracts to use identical ABI encoding/decoding patterns with explicit type declarations and thorough parameter validation to ensure cross-chain message integrity.",
+                        "references": [],
+                        "tags": []
+                    },
+                    {
+                        "id": "SOL-Integrations-CC-4",
+                        "question": "Does the application logic account for the potential latency introduced by waiting for source chain finality as defined by CCIP?",
+                        "description": "Applications assuming immediate cross-chain execution might behave unexpectedly due to varying finality times across blockchains which CCIP respects.",
+                        "remediation": "Design application logic to be aware of and tolerant to CCIP execution latencies, which depend on the source chain's finality mechanism (finality tag or block depth).",
+                        "references": [
+                            "https://docs.chain.link/ccip/concepts/ccip-execution-latency#finality-by-blockchain"
+                        ],
+                        "tags": []
+                    },
+                    {
+                        "id": "SOL-Integrations-CC-5",
+                        "question": "Are the correct types of token pools (e.g., `BurnMintTokenPool`, `LockReleaseTokenPool`) deployed on the source and destination chains consistent with the desired token handling mechanism?",
+                        "description": "Deploying mismatched pool types (e.g., expecting Lock & Mint but deploying Burn & Mint on the destination) will lead to failed transfers or incorrect token handling.",
+                        "remediation": "Verify that the deployed token pool contracts on each chain match the intended cross-chain mechanism (Burn & Mint requires BurnMint pools; Lock & Mint requires LockRelease on source, BurnMint on destination, etc.).",
+                        "references": [
+                            "https://docs.chain.link/ccip/concepts/cross-chain-tokens#token-handling-mechanisms-and-token-pool-deployment"
+                        ],
+                        "tags": []
+                    },
+                    {
+                        "id": "SOL-Integrations-CC-6",
+                        "question": "Is proper router address verification implemented in the ccipReceive method?",
+                        "description": "Without proper router validation, any address can spoof messages, potentially compromising contract security and asset integrity.",
+                        "remediation": "Implement a router address verification check that validates msg.sender against a trusted router address.",
+                        "references": [
+                            "https://docs.chain.link/ccip/best-practices#verify-router-addresses"
+                        ],
+                        "tags": []
+                    },
+                    {
+                        "id": "SOL-Integrations-CC-7",
+                        "question": "Are extraArgs parameters hardcoded instead of mutable in cross-chain message configurations?",
+                        "description": "Hardcoded extraArgs parameters prevent adaptation to future CCIP protocol upgrades and gas requirement changes, potentially causing cross-chain transactions to fail or become incompatible with network upgrades.",
+                        "remediation": "Implement extraArgs as mutable parameters that can be configured off-chain or via updateable contract variables rather than hardcoding them directly in the contract logic.",
+                        "references": [
+                            "https://docs.chain.link/ccip/best-practices#using-extraargs"
+                        ],
+                        "tags": []
+                    },
+                    {
+                        "id": "SOL-Integrations-CC-8",
+                        "question": "Is there a proper failure handling mechanism for CCIP messages to prevent blocking after Smart Execution window expiration?",
+                        "description": "When a CCIP message fails and the Smart Execution time window (8 hours) expires, all subsequent messages from the same sender will be blocked until the failed message succeeds, potentially causing permanent denial of service if the message cannot be fixed.",
+                        "remediation": "Implement robust error handling in CCIPReceiver implementation with try/catch blocks and recovery mechanisms to ensure messages can be successfully processed even under unexpected conditions.",
+                        "references": [
+                            "https://solodit.cyfrin.io/issues/m-04-price-updating-mechanism-can-break-code4rena-renzo-renzo-git"
+                        ],
+                        "tags": []
+                    }
+                ]
+            },
+            {
+                "category": "Chainlink VRF",
                 "description": "",
                 "data": [
                     {
-                        "category": "CCIP",
-                        "description": "Cross-Chain Interoperability Protocol",
-                        "data": [
-                            {
-                                "id": "SOL-Integrations-Chainlink-CCIP-1",
-                                "question": "Does the receiver contract's `_ccipReceive` function properly validate the `sourceChainSelector` and `sender` address against an allowlist?",
-                                "description": "Receiver contracts might process messages from unintended source chains or senders if they don't validate the origin.",
-                                "remediation": "Implement checks within `_ccipReceive` to verify the `any2EvmMessage.sourceChainSelector` and decoded `any2EvmMessage.sender` against administratively controlled allowlists.",
-                                "references": [],
-                                "tags": []
-                            },
-                            {
-                                "id": "SOL-Integrations-Chainlink-CCIP-2",
-                                "question": "Does the sender contract validate the `destinationChainSelector` against an allowlist before calling `ccipSend`?",
-                                "description": "Sender contracts might accidentally send messages and tokens to unintended or unsupported destination chains.",
-                                "remediation": "Implement checks in the sending function to ensure the `destinationChainSelector` corresponds to an explicitly allowlisted chain.",
-                                "references": [],
-                                "tags": []
-                            },
-                            {
-                                "id": "SOL-Integrations-Chainlink-CCIP-3",
-                                "question": "Does the receiver contract properly decode data (`any2EvmMessage.data`) ?",
-                                "description": "The encoding on the source chain and decoding on the destination chain must maintain precise structural consistency. ",
-                                "remediation": "Standardize both contracts to use identical ABI encoding/decoding patterns with explicit type declarations and thorough parameter validation to ensure cross-chain message integrity.",
-                                "references": [],
-                                "tags": []
-                            },
-                            {
-                                "id": "SOL-Integrations-Chainlink-CCIP-4",
-                                "question": "Does the application logic account for the potential latency introduced by waiting for source chain finality as defined by CCIP?",
-                                "description": "Applications assuming immediate cross-chain execution might behave unexpectedly due to varying finality times across blockchains which CCIP respects.",
-                                "remediation": "Design application logic to be aware of and tolerant to CCIP execution latencies, which depend on the source chain's finality mechanism (finality tag or block depth).",
-                                "references": [
-                                    "https://docs.chain.link/ccip/concepts/ccip-execution-latency#finality-by-blockchain"
-                                ],
-                                "tags": []
-                            },
-                            {
-                                "id": "SOL-Integrations-Chainlink-CCIP-5",
-                                "question": "Are the correct types of token pools (e.g., `BurnMintTokenPool`, `LockReleaseTokenPool`) deployed on the source and destination chains consistent with the desired token handling mechanism?",
-                                "description": "Deploying mismatched pool types (e.g., expecting Lock & Mint but deploying Burn & Mint on the destination) will lead to failed transfers or incorrect token handling.",
-                                "remediation": "Verify that the deployed token pool contracts on each chain match the intended cross-chain mechanism (Burn & Mint requires BurnMint pools; Lock & Mint requires LockRelease on source, BurnMint on destination, etc.).",
-                                "references": [
-                                    "https://docs.chain.link/ccip/concepts/cross-chain-tokens#token-handling-mechanisms-and-token-pool-deployment"
-                                ],
-                                "tags": []
-                            },
-                            {
-                                "id": "SOL-Integrations-Chainlink-CCIP-6",
-                                "question": "Is proper router address verification implemented in the ccipReceive method?",
-                                "description": "Without proper router validation, any address can spoof messages, potentially compromising contract security and asset integrity.",
-                                "remediation": "Implement a router address verification check that validates msg.sender against a trusted router address.",
-                                "references": [
-                                    "https://docs.chain.link/ccip/best-practices#verify-router-addresses"
-                                ],
-                                "tags": []
-                            },
-                            {
-                                "id": "SOL-Integrations-Chainlink-CCIP-7",
-                                "question": "Are extraArgs parameters hardcoded instead of mutable in cross-chain message configurations?",
-                                "description": "Hardcoded extraArgs parameters prevent adaptation to future CCIP protocol upgrades and gas requirement changes, potentially causing cross-chain transactions to fail or become incompatible with network upgrades.",
-                                "remediation": "Implement extraArgs as mutable parameters that can be configured off-chain or via updateable contract variables rather than hardcoding them directly in the contract logic.",
-                                "references": [
-                                    "https://docs.chain.link/ccip/best-practices#using-extraargs"
-                                ],
-                                "tags": []
-                            },
-                            {
-                                "id": "SOL-Integrations-Chainlink-CCIP-8",
-                                "question": "Is there a proper failure handling mechanism for CCIP messages to prevent blocking after Smart Execution window expiration?",
-                                "description": "When a CCIP message fails and the Smart Execution time window (8 hours) expires, all subsequent messages from the same sender will be blocked until the failed message succeeds, potentially causing permanent denial of service if the message cannot be fixed.",
-                                "remediation": "Implement robust error handling in CCIPReceiver implementation with try/catch blocks and recovery mechanisms to ensure messages can be successfully processed even under unexpected conditions.",
-                                "references": [
-                                    "https://solodit.cyfrin.io/issues/m-04-price-updating-mechanism-can-break-code4rena-renzo-renzo-git"
-                                ],
-                                "tags": []
-                            }
-                        ]
+                        "id": "SOL-Integrations-CV-1",
+                        "question": "Are all parameters properly verified when Chainlink VRF is called?",
+                        "description": "If the parameters are not thoroughly verified when Chainlink VRF is called, the `fullfillRandomWord` function will not revert but return an incorrect value.",
+                        "remediation": "Ensure that all parameters passed to Chainlink VRF are verified to ensure the correct operation of `fullfillRandomWord`.",
+                        "references": [],
+                        "tags": []
                     },
                     {
-                        "category": "VRF",
-                        "description": "",
-                        "data": [
-                            {
-                                "id": "SOL-Integrations-Chainlink-VRF-1",
-                                "question": "Are all parameters properly verified when Chainlink VRF is called?",
-                                "description": "If the parameters are not thoroughly verified when Chainlink VRF is called, the `fullfillRandomWord` function will not revert but return an incorrect value.",
-                                "remediation": "Ensure that all parameters passed to Chainlink VRF are verified to ensure the correct operation of `fullfillRandomWord`.",
-                                "references": [],
-                                "tags": []
-                            },
-                            {
-                                "id": "SOL-Integrations-Chainlink-VRF-2",
-                                "question": "Is it guaranteed that the operator holds sufficient LINK in the subscription?",
-                                "description": "Chainlink VRF can go into a pending state if there's insufficient LINK in the subscription. Once the subscription is refilled, the transaction can potentially be frontrun, introducing vulnerabilities.",
-                                "remediation": "Ensure the pending subscription does not affect the protocol's functionality.",
-                                "references": [],
-                                "tags": []
-                            },
-                            {
-                                "id": "SOL-Integrations-Chainlink-VRF-3",
-                                "question": "Is a sufficiently high request confirmation number chosen considering chain re-orgs?",
-                                "description": "Not choosing a high enough request confirmation number can pose risks, especially in the context of chain re-orgs.",
-                                "remediation": "Evaluate the chain's vulnerability to re-orgs and adjust the request confirmation number accordingly.",
-                                "references": [
-                                    "https://github.com/pashov/audits/blob/master/solo/NFTLoots-security-review.md#c-01-polygon-chain-reorgs-will-often-change-game-results"
-                                ],
-                                "tags": []
-                            },
-                            {
-                                "id": "SOL-Integrations-Chainlink-VRF-4",
-                                "question": "Are measures in place to prevent VRF calls from being frontrun?",
-                                "description": "VRF calls can be frontrun and it's crucial to ensure that the user interactions are closed before the VRF call to prevent this.",
-                                "remediation": "Ensure the implementation closes the user interaction phase before initiating the VRF call.",
-                                "references": [],
-                                "tags": []
-                            }
-                        ]
+                        "id": "SOL-Integrations-CV-2",
+                        "question": "Is it guaranteed that the operator holds sufficient LINK in the subscription?",
+                        "description": "Chainlink VRF can go into a pending state if there's insufficient LINK in the subscription. Once the subscription is refilled, the transaction can potentially be frontrun, introducing vulnerabilities.",
+                        "remediation": "Ensure the pending subscription does not affect the protocol's functionality.",
+                        "references": [],
+                        "tags": []
+                    },
+                    {
+                        "id": "SOL-Integrations-CV-3",
+                        "question": "Is a sufficiently high request confirmation number chosen considering chain re-orgs?",
+                        "description": "Not choosing a high enough request confirmation number can pose risks, especially in the context of chain re-orgs.",
+                        "remediation": "Evaluate the chain's vulnerability to re-orgs and adjust the request confirmation number accordingly.",
+                        "references": [
+                            "https://github.com/pashov/audits/blob/master/solo/NFTLoots-security-review.md#c-01-polygon-chain-reorgs-will-often-change-game-results"
+                        ],
+                        "tags": []
+                    },
+                    {
+                        "id": "SOL-Integrations-CV-4",
+                        "question": "Are measures in place to prevent VRF calls from being frontrun?",
+                        "description": "VRF calls can be frontrun and it's crucial to ensure that the user interactions are closed before the VRF call to prevent this.",
+                        "remediation": "Ensure the implementation closes the user interaction phase before initiating the VRF call.",
+                        "references": [],
+                        "tags": []
                     }
                 ]
             },
@@ -2286,128 +2280,122 @@
                 ]
             },
             {
-                "category": "LSD",
+                "category": "LSD cbETH",
                 "description": "",
                 "data": [
                     {
-                        "category": "cbETH",
-                        "description": "",
-                        "data": [
-                            {
-                                "id": "SOL-Integrations-LSD-cbETH-1",
-                                "question": "How is the control over the `cbETH`/`ETH` rate determined? Are there specific addresses with this capability due to the `onlyOracle` modifier?",
-                                "description": "The rate between `cbETH` and `ETH` being controllable by a few addresses can introduce centralization risks and potential manipulations.",
-                                "remediation": "Any address with `onlyOracle` permissions should be scrutinized and their actions should be transparent to the community.",
-                                "references": [],
-                                "tags": []
-                            },
-                            {
-                                "id": "SOL-Integrations-LSD-cbETH-2",
-                                "question": "How does the system handle potential decreases in the `cbETH`/`ETH` rate?",
-                                "description": "The rate of `cbETH` to `ETH` can decrease, which can impact users who hold or interact with `cbETH`.",
-                                "remediation": "Implement mechanisms to inform users about the current `cbETH`/`ETH` rate. Consider providing alerts or notifications for significant rate changes. Ensure there's a mechanism to handle or rectify situations where the rate decreases dramatically.",
-                                "references": [],
-                                "tags": []
-                            }
-                        ]
+                        "id": "SOL-Integrations-Lc-1",
+                        "question": "How is the control over the `cbETH`/`ETH` rate determined? Are there specific addresses with this capability due to the `onlyOracle` modifier?",
+                        "description": "The rate between `cbETH` and `ETH` being controllable by a few addresses can introduce centralization risks and potential manipulations.",
+                        "remediation": "Any address with `onlyOracle` permissions should be scrutinized and their actions should be transparent to the community.",
+                        "references": [],
+                        "tags": []
                     },
                     {
-                        "category": "rETH",
-                        "description": "",
-                        "data": [
-                            {
-                                "id": "SOL-Integrations-LSD-rETH-1",
-                                "question": "Does the application account for potential penalties or slashes?",
-                                "description": "Validators on the Ethereum 2.0 Beacon Chain can be penalized or slashed for misbehavior. This can affect the value of `rETH`.",
-                                "remediation": "Implement mechanisms to account for potential penalties or slashes that can impact the value of `rETH`.",
-                                "references": [],
-                                "tags": []
-                            },
-                            {
-                                "id": "SOL-Integrations-LSD-rETH-2",
-                                "question": "How does the system manage rewards accrued from staking?",
-                                "description": "Staking on the Ethereum 2.0 Beacon Chain accrues rewards. The system should account for these rewards when dealing with `rETH`.",
-                                "remediation": "Ensure proper distribution or accumulation of rewards in the system's `rETH` management.",
-                                "references": [],
-                                "tags": []
-                            },
-                            {
-                                "id": "SOL-Integrations-LSD-rETH-3",
-                                "question": "Does the application handle potential reverts in the `burn()` function when there's insufficient ether in the `RocketDepositPool`?",
-                                "description": "If there's not enough ether in the `RocketDepositPool` contract, the `burn()` function can fail. It's important for the system to handle these failures gracefully.",
-                                "remediation": "Ensure there's a mechanism to either prevent calls to `burn()` when there's insufficient ether or handle the revert gracefully, informing the user appropriately.",
-                                "references": [],
-                                "tags": []
-                            },
-                            {
-                                "id": "SOL-Integrations-LSD-rETH-4",
-                                "question": "What measures are in place to counteract potential consensus attacks on RPL nodes?",
-                                "description": "There's a risk of consensus attacks on RPL nodes where malicious nodes may submit incorrect exchange rate data, leading to discrepancies.",
-                                "remediation": "Implement a system in place to quickly rectify incorrect data submissions by nodes.",
-                                "references": [],
-                                "tags": []
-                            },
-                            {
-                                "id": "SOL-Integrations-LSD-rETH-5",
-                                "question": "How does the system handle the conversion between `ETH` and `rETH`?",
-                                "description": "The conversion rate between `ETH` and `rETH` might change over time based on the rewards accrued from staking. Ensure this dynamic is properly captured.",
-                                "remediation": "Integrate accurate conversion mechanisms that consider the ever-changing staking rewards when converting between `ETH` and `rETH`.",
-                                "references": [],
-                                "tags": []
-                            }
-                        ]
+                        "id": "SOL-Integrations-Lc-2",
+                        "question": "How does the system handle potential decreases in the `cbETH`/`ETH` rate?",
+                        "description": "The rate of `cbETH` to `ETH` can decrease, which can impact users who hold or interact with `cbETH`.",
+                        "remediation": "Implement mechanisms to inform users about the current `cbETH`/`ETH` rate. Consider providing alerts or notifications for significant rate changes. Ensure there's a mechanism to handle or rectify situations where the rate decreases dramatically.",
+                        "references": [],
+                        "tags": []
+                    }
+                ]
+            },
+            {
+                "category": "LSD rETH",
+                "description": "",
+                "data": [
+                    {
+                        "id": "SOL-Integrations-LSD-rETH-1",
+                        "question": "Does the application account for potential penalties or slashes?",
+                        "description": "Validators on the Ethereum 2.0 Beacon Chain can be penalized or slashed for misbehavior. This can affect the value of `rETH`.",
+                        "remediation": "Implement mechanisms to account for potential penalties or slashes that can impact the value of `rETH`.",
+                        "references": [],
+                        "tags": []
                     },
                     {
-                        "category": "sfrxETH",
-                        "description": "",
-                        "data": [
-                            {
-                                "id": "SOL-Integrations-LSD-sfrxETH-1",
-                                "question": "How does the system handle potential detachment of `sfrxETH` from `frxETH` during reward transfers?",
-                                "description": "If `sfrxETH` detaches from `frxETH` during reward transfers, it could cause discrepancies in expected and actual values, especially if these transfers are controlled by a centralized entity like the Frax team's multi-sig contract.",
-                                "remediation": "Ensure there's transparency around the actions of the Frax team's multi-sig contract. Consider mechanisms to alert users or stakeholders about discrepancies between `sfrxETH` and `frxETH`.",
-                                "references": [],
-                                "tags": []
-                            },
-                            {
-                                "id": "SOL-Integrations-LSD-sfrxETH-2",
-                                "question": "Is the stability of the `sfrxETH`/`ETH` rate guaranteed or can it decrease in the future?",
-                                "description": "While the `sfrxETH`/`ETH` rate might be stable now, changes in the future could impact users and stakeholders, especially if they're not forewarned.",
-                                "remediation": "Provide clear documentation and alerts about potential changes to the `sfrxETH`/`ETH` rate. Ensure users are informed well in advance about any planned changes that could affect the rate.",
-                                "references": [],
-                                "tags": []
-                            }
-                        ]
+                        "id": "SOL-Integrations-LSD-rETH-2",
+                        "question": "How does the system manage rewards accrued from staking?",
+                        "description": "Staking on the Ethereum 2.0 Beacon Chain accrues rewards. The system should account for these rewards when dealing with `rETH`.",
+                        "remediation": "Ensure proper distribution or accumulation of rewards in the system's `rETH` management.",
+                        "references": [],
+                        "tags": []
                     },
                     {
-                        "category": "stETH",
-                        "description": "",
-                        "data": [
-                            {
-                                "id": "SOL-Integrations-LSD-stETH-1",
-                                "question": "Is the application aware that `stETH` is a rebasing token?",
-                                "description": "`stETH` rebases, which can introduce complexities when integrated with DeFi platforms. Using `wstETH` can simplify integrations as it is non-rebasing.",
-                                "remediation": "Consider using `wstETH` for simpler DeFi integrations and to avoid complexities associated with rebasing tokens.",
-                                "references": [],
-                                "tags": []
-                            },
-                            {
-                                "id": "SOL-Integrations-LSD-stETH-2",
-                                "question": "Are you aware of the overhead when withdrawing `stETH`/`wstETH`?",
-                                "description": "Withdrawing `stETH` or `wstETH` can introduce overheads, due to various problems like queue time, receipt of an NFT, and withdrawal amount limits.",
-                                "remediation": "Ensure account for these overheads and constraints in the protocol logic.",
-                                "references": [],
-                                "tags": []
-                            },
-                            {
-                                "id": "SOL-Integrations-LSD-stETH-3",
-                                "question": "Does the application handle conversions between `stETH` and `wstETH` correctly?",
-                                "description": "Converting between `stETH` and `wstETH` can be tricky due to the rebasing nature of `stETH`. It's crucial to handle these conversions correctly to avoid potential issues.",
-                                "remediation": "Ensure that the rebasing characteristics of `stETH` are properly managed when converting between `stETH` and `wstETH`.",
-                                "references": [],
-                                "tags": []
-                            }
-                        ]
+                        "id": "SOL-Integrations-LSD-rETH-3",
+                        "question": "Does the application handle potential reverts in the `burn()` function when there's insufficient ether in the `RocketDepositPool`?",
+                        "description": "If there's not enough ether in the `RocketDepositPool` contract, the `burn()` function can fail. It's important for the system to handle these failures gracefully.",
+                        "remediation": "Ensure there's a mechanism to either prevent calls to `burn()` when there's insufficient ether or handle the revert gracefully, informing the user appropriately.",
+                        "references": [],
+                        "tags": []
+                    },
+                    {
+                        "id": "SOL-Integrations-LSD-rETH-4",
+                        "question": "What measures are in place to counteract potential consensus attacks on RPL nodes?",
+                        "description": "There's a risk of consensus attacks on RPL nodes where malicious nodes may submit incorrect exchange rate data, leading to discrepancies.",
+                        "remediation": "Implement a system in place to quickly rectify incorrect data submissions by nodes.",
+                        "references": [],
+                        "tags": []
+                    },
+                    {
+                        "id": "SOL-Integrations-LSD-rETH-5",
+                        "question": "How does the system handle the conversion between `ETH` and `rETH`?",
+                        "description": "The conversion rate between `ETH` and `rETH` might change over time based on the rewards accrued from staking. Ensure this dynamic is properly captured.",
+                        "remediation": "Integrate accurate conversion mechanisms that consider the ever-changing staking rewards when converting between `ETH` and `rETH`.",
+                        "references": [],
+                        "tags": []
+                    }
+                ]
+            },
+            {
+                "category": "LSD sfrxETH",
+                "description": "",
+                "data": [
+                    {
+                        "id": "SOL-Integrations-LSDsfrxETH-1",
+                        "question": "How does the system handle potential detachment of `sfrxETH` from `frxETH` during reward transfers?",
+                        "description": "If `sfrxETH` detaches from `frxETH` during reward transfers, it could cause discrepancies in expected and actual values, especially if these transfers are controlled by a centralized entity like the Frax team's multi-sig contract.",
+                        "remediation": "Ensure there's transparency around the actions of the Frax team's multi-sig contract. Consider mechanisms to alert users or stakeholders about discrepancies between `sfrxETH` and `frxETH`.",
+                        "references": [],
+                        "tags": []
+                    },
+                    {
+                        "id": "SOL-Integrations-LSDsfrxETH-2",
+                        "question": "Is the stability of the `sfrxETH`/`ETH` rate guaranteed or can it decrease in the future?",
+                        "description": "While the `sfrxETH`/`ETH` rate might be stable now, changes in the future could impact users and stakeholders, especially if they're not forewarned.",
+                        "remediation": "Provide clear documentation and alerts about potential changes to the `sfrxETH`/`ETH` rate. Ensure users are informed well in advance about any planned changes that could affect the rate.",
+                        "references": [],
+                        "tags": []
+                    }
+                ]
+            },
+            {
+                "category": "LSD stETH",
+                "description": "",
+                "data": [
+                    {
+                        "id": "SOL-Integrations-LSDstETH-1",
+                        "question": "Is the application aware that `stETH` is a rebasing token?",
+                        "description": "`stETH` rebases, which can introduce complexities when integrated with DeFi platforms. Using `wstETH` can simplify integrations as it is non-rebasing.",
+                        "remediation": "Consider using `wstETH` for simpler DeFi integrations and to avoid complexities associated with rebasing tokens.",
+                        "references": [],
+                        "tags": []
+                    },
+                    {
+                        "id": "SOL-Integrations-LSDstETH-2",
+                        "question": "Are you aware of the overhead when withdrawing `stETH`/`wstETH`?",
+                        "description": "Withdrawing `stETH` or `wstETH` can introduce overheads, due to various problems like queue time, receipt of an NFT, and withdrawal amount limits.",
+                        "remediation": "Ensure account for these overheads and constraints in the protocol logic.",
+                        "references": [],
+                        "tags": []
+                    },
+                    {
+                        "id": "SOL-Integrations-LSDstETH-3",
+                        "question": "Does the application handle conversions between `stETH` and `wstETH` correctly?",
+                        "description": "Converting between `stETH` and `wstETH` can be tricky due to the rebasing nature of `stETH`. It's crucial to handle these conversions correctly to avoid potential issues.",
+                        "remediation": "Ensure that the rebasing characteristics of `stETH` are properly managed when converting between `stETH` and `wstETH`.",
+                        "references": [],
+                        "tags": []
                     }
                 ]
             },
